@@ -28,7 +28,6 @@
 @property (readonly) NSString *bundleVersion;
 @property NSInteger indexOfSelectedSecretKey;
 @property NSInteger passphraseCacheTime;
-@property (retain) NSString *comments;
 @property (readonly) GPGOptions *options;
 
 // Get a list of keyservers from GPGOptions

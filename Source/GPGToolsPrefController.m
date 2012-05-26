@@ -56,27 +56,6 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
 	return @"/Applications/Mail.app";
 }*/
 
-- (NSString *)comments {
-	return [[options valueInGPGConfForKey:@"comment"] componentsJoinedByString:@"\n"];
-}
-- (void)setComments:(NSString *)value {
-	NSArray *lines = [value componentsSeparatedByString:@"\n"];
-	NSMutableArray *filteredLines = [NSMutableArray array];
-	NSCharacterSet *whitespaceCharacterSet = [NSCharacterSet whitespaceCharacterSet];
-	NSCharacterSet *nonWhitespaceCharacterSet = [whitespaceCharacterSet invertedSet];
-	
-	[lines enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-		if ([obj rangeOfCharacterFromSet:nonWhitespaceCharacterSet].length > 0) {
-			[filteredLines addObject:[obj stringByTrimmingCharactersInSet:whitespaceCharacterSet]];
-		}
-	}];
-	
-	
-	[options setValueInGPGConf:filteredLines forKey:@"comment"];
-}
-
-
-
 + (NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
 	NSSet *mySet = nil;
 	NSSet *keysAffectedBySecretKeys = [NSSet setWithObjects:@"secretKeyDescriptions", @"indexOfSelectedSecretKey", nil];
