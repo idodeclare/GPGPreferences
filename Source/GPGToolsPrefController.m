@@ -16,6 +16,8 @@
 
 static NSString * const kKeyserver = @"keyserver";
 static NSString * const kAutoKeyLocate = @"auto-key-locate";
+static NSString * const kDefaultKey = @"default-key";
+static NSString * const kIndexOfSelectedSecretKey = @"indexOfSelectedSecretKey";
 
 @interface GPGToolsPrefController()
 @property (retain) SUUpdater *updater;
@@ -36,6 +38,8 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
 	gpgc.delegate = self;
 	
 	options = [[GPGOptions sharedOptions] retain];
+    [options addObserver:self forKeyPath:kKeyserver options:NSKeyValueObservingOptionNew context:nil];
+    [options addObserver:self forKeyPath:kDefaultKey options:NSKeyValueObservingOptionNew context:nil];
 
     self.updater = [SUUpdater updaterForBundle:[NSBundle bundleForClass:[self class]]];
 	//updater.delegate = self;
@@ -46,6 +50,8 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
 - (void)dealloc {
 	[gpgc release];
 	[secretKeysLock release];
+    [options removeObserver:self forKeyPath:kKeyserver];
+    [options removeObserver:self forKeyPath:kDefaultKey];
 	[options release];
 	self.updater = nil;
 	[super dealloc];
@@ -58,12 +64,25 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
 
 + (NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
 	NSSet *mySet = nil;
-	NSSet *keysAffectedBySecretKeys = [NSSet setWithObjects:@"secretKeyDescriptions", @"indexOfSelectedSecretKey", nil];
+	NSSet *keysAffectedBySecretKeys = [NSSet setWithObjects:@"secretKeyDescriptions", kIndexOfSelectedSecretKey, nil];
 	if ([keysAffectedBySecretKeys containsObject:key]) {
 		mySet = [NSSet setWithObject:@"secretKeys"];
 	}
 	NSSet *superSet = [super keyPathsForValuesAffectingValueForKey:key];
 	return [superSet setByAddingObjectsFromSet:mySet];
+}
+
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([kKeyserver isEqualToString:keyPath]) {
+        [self willChangeValueForKey:kKeyserver];
+        [self didChangeValueForKey:kKeyserver];
+    }
+    else if ([kDefaultKey isEqualToString:keyPath]) {
+        [self willChangeValueForKey:kIndexOfSelectedSecretKey];
+        [self didChangeValueForKey:kIndexOfSelectedSecretKey];
+    }
 }
 
 
@@ -274,7 +293,7 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
  * Index of the default key.
  */
 - (NSInteger)indexOfSelectedSecretKey {
-	NSString *defaultKey = [options valueForKey:@"default-key"];
+	NSString *defaultKey = [options valueForKey:kDefaultKey];
 	if ([defaultKey length] == 0) {
 		return -1;
 	}
@@ -294,10 +313,10 @@ static NSString * const kAutoKeyLocate = @"auto-key-locate";
 - (void)setIndexOfSelectedSecretKey:(NSInteger)index {
 	NSArray *keys = self.secretKeys;
 	if (index < [keys count] && index >= 0) {
-		[options setValue:[[keys objectAtIndex:index] fingerprint] forKey:@"default-key"];
+		[options setValue:[[keys objectAtIndex:index] fingerprint] forKey:kDefaultKey];
 	}
     else if (index == -1) {
-		[options setValue:nil forKey:@"default-key"];
+		[options setValue:nil forKey:kDefaultKey];
     }
 }
 
